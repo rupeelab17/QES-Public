@@ -30,7 +30,7 @@ def _parse_qes_xml(xml_path: str) -> tuple[float, float, float, float, str]:
     """Return dx, dy, halo_x, halo_y, and relative DEM path from a QES XML.
 
     Domain origin (UTMx/UTMy) is intentionally not read: the template XML is not
-    updated by run_qeswinds.py / run_qeswinds_args.py. Use DEM SW minus halo
+    updated by the umep_workflow winds run. Use DEM SW minus halo
     (DEM content is inset by halo in the QES mesh — see DTEHeightField.cpp).
     """
     tree = ET.parse(xml_path)
