@@ -70,6 +70,12 @@ WINDSGeneralData::WINDSGeneralData(const WINDSInputData *WID, qes::Domain domain
   // assumes degrees
   theta = (WID->simParams->domainRotation * pi / 180.0);
 
+  // Propagate UTM origin metadata from XML (simParams) onto WGD so
+  // workspace NetCDF / logs / HRRR-Plume readers see the same values.
+  UTMx = WID->simParams->UTMx;
+  UTMy = WID->simParams->UTMy;
+  UTMZone = WID->simParams->UTMZone;
+
   // Pull Domain Size information from the WINDSInputData structure --
   // this is either read in from the XML files and/or potentially
   // calculated based on the geographic data that was loaded

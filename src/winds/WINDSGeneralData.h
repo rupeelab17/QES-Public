@@ -185,8 +185,9 @@ public:
   float halo_x{}, halo_y{};
   int halo_index_x{}, halo_index_y{};
 
-  float UTMx, UTMy;
-  int UTMZone;
+  float UTMx{};
+  float UTMy{};
+  int UTMZone{};
 
   // long numcell_cout{}; /**< :document this: */
   // long numcell_cout_2d; /**< :document this: */
