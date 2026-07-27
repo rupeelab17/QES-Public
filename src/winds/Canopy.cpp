@@ -107,13 +107,7 @@ void Canopy::setCanopyElements(const WINDSInputData *WID, WINDSGeneralData *WGD)
         WID->vegetationParams->SHPData->m_polygons[pIdx][lIdx].y_poly -= minExtent[1];
       }
 
-      // Setting base height for tree if there is a DEM file (TODO)
-      if (WID->simParams->DTE_heightField && WID->simParams->DTE_mesh) {
-        std::cerr << "Isolated tree from shapefile and DEM not implemented...\n";
-      } else {
-        // base_height.push_back(0.0);
-      }
-
+      // Tree base is AGL (0); setCellFlags adds terrain[icell] for DEM cases.
       for (auto lIdx = 0u; lIdx < WID->vegetationParams->SHPData->m_polygons[pIdx].size(); lIdx++) {
         WID->vegetationParams->SHPData->m_polygons[pIdx][lIdx].x_poly += WID->simParams->halo_x;
         WID->vegetationParams->SHPData->m_polygons[pIdx][lIdx].y_poly += WID->simParams->halo_y;

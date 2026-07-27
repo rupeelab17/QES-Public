@@ -100,10 +100,14 @@ void CanopyIsolatedTree::setCellFlags(const WINDSInputData *WID, WINDSGeneralDat
         if (WGD->icellflag_footprint[icell_2d] == 0) {
           // a  building exist here -> skip
         } else {
+          int bot_idx = -1;
+          int top_idx = -1;
+
           // Define start index of the canopy in z-direction
           for (size_t k = 1u; k < WGD->domain.z.size(); k++) {
             if (WGD->terrain[icell_2d] + base_height <= WGD->domain.z[k]) {
-              WGD->canopy->canopy_bot_index[icell_2d] = k;
+              bot_idx = static_cast<int>(k);
+              WGD->canopy->canopy_bot_index[icell_2d] = bot_idx;
               WGD->canopy->canopy_bot[icell_2d] = WGD->terrain[icell_2d] + base_height;
               WGD->canopy->canopy_base[icell_2d] = WGD->domain.z_face[k];
               break;
@@ -111,12 +115,18 @@ void CanopyIsolatedTree::setCellFlags(const WINDSInputData *WID, WINDSGeneralDat
           }
 
           // Define end index of the canopy in z-direction
-          for (size_t k = 0u; k < WGD->domain.z.size(); k++) {
+          for (size_t k = 0u; k + 1 < WGD->domain.z.size(); k++) {
             if (WGD->terrain[icell_2d] + H < WGD->domain.z[k + 1]) {
-              WGD->canopy->canopy_top_index[icell_2d] = k + 1;
+              top_idx = static_cast<int>(k + 1);
+              WGD->canopy->canopy_top_index[icell_2d] = top_idx;
               WGD->canopy->canopy_top[icell_2d] = WGD->terrain[icell_2d] + H;
               break;
             }
+          }
+
+          // Tree taller than domain (or empty vertical span): skip this column.
+          if (bot_idx < 0 || top_idx < 0 || bot_idx >= top_idx) {
+            continue;
           }
 
           WGD->icellflag_footprint[icell_2d] = getCellFlagCanopy();
@@ -143,25 +153,36 @@ void CanopyIsolatedTree::setCellFlags(const WINDSInputData *WID, WINDSGeneralDat
   if (canopy_cell2D.size() == 0) {
     k_start = 0;
     k_end = 0;
-  } else {
-    k_start = nz - 1;
-    k_end = 0;
-    for (size_t k = 0u; k < canopy_cell2D.size(); k++) {
-      if (WGD->canopy->canopy_bot_index[canopy_cell2D[k]] < k_start)
-        k_start = WGD->canopy->canopy_bot_index[canopy_cell2D[k]];
-      if (WGD->canopy->canopy_top_index[canopy_cell2D[k]] > k_end)
-        k_end = WGD->canopy->canopy_top_index[canopy_cell2D[k]];
-    }
+    return;
+  }
+
+  k_start = nz - 1;
+  k_end = 0;
+  for (size_t k = 0u; k < canopy_cell2D.size(); k++) {
+    if (WGD->canopy->canopy_bot_index[canopy_cell2D[k]] < k_start)
+      k_start = WGD->canopy->canopy_bot_index[canopy_cell2D[k]];
+    if (WGD->canopy->canopy_top_index[canopy_cell2D[k]] > k_end)
+      k_end = WGD->canopy->canopy_top_index[canopy_cell2D[k]];
   }
 
   if (k_start > k_end) {
-    std::cerr << "ERROR in tree definition (k_start > k end)" << std::endl;
-    exit(EXIT_FAILURE);
+    std::cerr << "WARNING: tree " << tree_id
+              << " skipped (k_start > k_end); increase domain nz or reduce H\n";
+    k_start = 0;
+    k_end = 0;
+    canopy_cell2D.clear();
+    canopy_cell3D.clear();
+    return;
   }
 
   if (ceil(1.5 * k_end) > nz - 1) {
-    std::cerr << "ERROR domain too short for tree method" << std::endl;
-    exit(EXIT_FAILURE);
+    std::cerr << "WARNING: tree " << tree_id
+              << " skipped (domain too short for tree wake); increase nz\n";
+    k_start = 0;
+    k_end = 0;
+    canopy_cell2D.clear();
+    canopy_cell3D.clear();
+    return;
   }
 
   return;
